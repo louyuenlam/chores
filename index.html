@@ -1,0 +1,1850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Chores</title>
+
+<!-- iOS home-screen app setup -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Chores">
+<meta name="theme-color" content="#FDF9F3">
+
+<link rel="apple-touch-icon" href="./icon.png">
+<link rel="icon" type="image/png" href="./icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FDF9F0;
+    --cream-dark: #F4E9CF;
+    --babouche: #D4892E;
+    --babouche-dark: #A66616;
+    --babouche-light: #ECC68A;
+    --babouche-pale: #F8E8C5;
+    --ink: #3A2E1F;
+    --ink-soft: #5B4A36;
+    --muted: #9A8A70;
+    --border: #ECDFC2;
+    --green: #7A9278;
+    --warn: #B8721C;
+    --shadow: 0 1px 2px rgba(58, 46, 31, 0.04), 0 4px 12px rgba(58, 46, 31, 0.06);
+    --shadow-lift: 0 4px 8px rgba(58, 46, 31, 0.08), 0 12px 24px rgba(58, 46, 31, 0.1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Manrope', -apple-system, sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: calc(24px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(80px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(236, 198, 138, 0.10) 0%, transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(122, 146, 120, 0.05) 0%, transparent 40%);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 32px;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .brand em {
+    font-style: italic;
+    font-weight: 500;
+    color: var(--babouche);
+  }
+  .date-stamp {
+    text-align: right;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .date-stamp .day {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--ink-soft);
+    text-transform: none;
+    letter-spacing: 0;
+    display: block;
+    margin-top: 2px;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--cream-dark);
+    padding: 4px;
+    border-radius: 12px;
+    margin-bottom: 28px;
+    width: fit-content;
+  }
+  .tab {
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    letter-spacing: 0.02em;
+  }
+  .tab.active {
+    background: var(--cream);
+    color: var(--babouche-dark);
+    box-shadow: var(--shadow);
+  }
+  .tab:hover:not(.active) { color: var(--ink-soft); }
+
+  /* View panels */
+  .view { display: none; }
+  .view.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Section header for grouped chores */
+  .section-label {
+    font-family: 'Manrope', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin: 18px 0 10px 4px;
+  }
+  .section-label:first-child { margin-top: 0; }
+
+  /* Chores list */
+  .chores {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .chore {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow);
+  }
+  .chore:hover { transform: translateY(-1px); box-shadow: var(--shadow-lift); }
+  .chore.fresh {
+    background: linear-gradient(135deg, rgba(122, 146, 120, 0.08), white);
+    border-color: rgba(122, 146, 120, 0.25);
+  }
+  .chore.overdue {
+    background: linear-gradient(135deg, var(--babouche-pale), white);
+    border-color: var(--babouche-light);
+  }
+  .chore.urgent {
+    background: linear-gradient(135deg, rgba(184, 114, 28, 0.12), white);
+    border-color: rgba(184, 114, 28, 0.35);
+  }
+
+  .chore-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--cream);
+    border-radius: 10px;
+  }
+  .chore.fresh .chore-icon { background: rgba(122, 146, 120, 0.15); }
+  .chore.overdue .chore-icon { background: var(--babouche-pale); }
+  .chore.urgent .chore-icon { background: rgba(184, 114, 28, 0.15); }
+
+  .chore-body {
+    flex: 1;
+    min-width: 0;
+  }
+  .chore-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+  .chore-meta {
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .chore-meta .never { color: var(--warn); font-weight: 600; }
+  .chore-meta .urgent-tag { color: var(--warn); font-weight: 600; }
+  .chore-meta .fresh-tag { color: var(--green); font-weight: 600; }
+
+  .done-btn {
+    flex-shrink: 0;
+    padding: 10px 16px;
+    border: 1px solid var(--babouche);
+    background: white;
+    color: var(--babouche-dark);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  .done-btn:hover {
+    background: var(--babouche);
+    color: white;
+    transform: translateY(-1px);
+  }
+  .done-btn:active { transform: translateY(0); }
+
+  .chore.fresh .done-btn { border-color: var(--green); color: var(--green); }
+  .chore.fresh .done-btn:hover { background: var(--green); color: white; }
+
+  /* Count stepper (for counted chores when done) */
+  .count-stepper {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: white;
+    border: 1px solid var(--green);
+    border-radius: 999px;
+    padding: 4px;
+  }
+  .count-step-btn {
+    width: 28px; height: 28px;
+    border: none;
+    background: transparent;
+    color: var(--green);
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+    padding: 0;
+    line-height: 1;
+  }
+  .count-step-btn:hover { background: rgba(122, 146, 120, 0.15); }
+  .count-step-btn:active { transform: scale(0.92); }
+  .count-value {
+    min-width: 56px;
+    text-align: center;
+    font-family: 'Fraunces', serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .count-value .num {
+    font-size: 18px;
+    color: var(--green);
+  }
+  .count-value .unit {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'Manrope', sans-serif;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: block;
+    margin-top: 1px;
+  }
+
+  /* Recently done banner */
+  .recent-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(122, 146, 120, 0.08);
+    border: 1px solid rgba(122, 146, 120, 0.25);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-bottom: 16px;
+    animation: slideDown 0.3s ease;
+  }
+  .recent-banner .undo-btn {
+    background: none;
+    border: none;
+    color: var(--green);
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    text-decoration: underline;
+    padding: 0;
+    margin-left: auto;
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-state .icon-large {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+  .empty-state h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-style: italic;
+    font-size: 22px;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .empty-state p { font-size: 14px; }
+
+  /* Calendar */
+  .cal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .cal-title {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .cal-title em { font-style: italic; color: var(--babouche-dark); font-weight: 500; }
+  .cal-nav { display: flex; gap: 6px; }
+  .cal-btn {
+    width: 36px; height: 36px;
+    border: 1px solid var(--border);
+    background: white;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--ink-soft);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s ease;
+  }
+  .cal-btn:hover { border-color: var(--babouche); color: var(--babouche-dark); }
+
+  .chore-picker {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .chore-chip {
+    padding: 7px 14px;
+    border: 1px solid var(--border);
+    background: white;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+  .chore-chip:hover { border-color: var(--babouche); }
+  .chore-chip.active {
+    background: var(--babouche-dark);
+    color: white;
+    border-color: var(--babouche-dark);
+  }
+  .chore-chip.all-mode.active {
+    background: var(--ink-soft);
+    border-color: var(--ink-soft);
+  }
+
+  .calendar {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: var(--shadow);
+  }
+  .cal-weekdays, .cal-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+  }
+  .cal-weekdays { margin-bottom: 10px; }
+  .wd {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 6px 0;
+  }
+  .day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: var(--ink-soft);
+    border-radius: 8px;
+    position: relative;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .day:not(.empty):not(.future):hover { background: var(--cream-dark); }
+  .day.empty { visibility: hidden; cursor: default; }
+  .day.done {
+    background: var(--babouche);
+    color: white;
+    font-weight: 600;
+  }
+  .day.partial {
+    background: var(--babouche-light);
+    color: white;
+  }
+  .day.today {
+    box-shadow: 0 0 0 2px var(--ink);
+  }
+  .day.future { color: var(--border); cursor: default; }
+  .day .count-dot {
+    position: absolute;
+    top: 3px;
+    right: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    background: var(--ink);
+    color: var(--cream);
+    border-radius: 999px;
+    padding: 1px 5px;
+    line-height: 1.4;
+  }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-sq {
+    width: 12px; height: 12px;
+    border-radius: 3px;
+  }
+  .legend-sq.done { background: var(--babouche); }
+  .legend-sq.partial { background: var(--babouche-light); }
+  .legend-sq.empty { background: white; border: 1px solid var(--border); }
+
+  /* Day detail panel */
+  .day-detail {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-top: 16px;
+    box-shadow: var(--shadow);
+  }
+  .day-detail-title {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--ink);
+  }
+  .day-detail-title em { font-style: italic; color: var(--babouche-dark); font-weight: 500; }
+  .day-detail-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .day-detail-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--cream);
+    border-radius: 8px;
+    font-size: 14px;
+  }
+  .day-detail-row .icon-mini {
+    font-size: 16px;
+    width: 24px;
+    text-align: center;
+  }
+  .day-detail-empty {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 16px;
+    font-style: italic;
+  }
+
+  /* Stats */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .stat-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+  }
+  .stat-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .stat-row .v {
+    font-family: 'Fraunces', serif;
+    color: var(--babouche-dark);
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  /* Settings */
+  .settings-section {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow);
+  }
+  .settings-section.danger-zone {
+    border-color: rgba(184, 114, 28, 0.3);
+    background: linear-gradient(135deg, white 0%, rgba(184, 114, 28, 0.04) 100%);
+  }
+  .section-title {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+    color: var(--ink);
+  }
+  .section-title em {
+    font-style: italic;
+    font-weight: 500;
+    color: var(--babouche-dark);
+  }
+  .section-hint {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  .chore-manager {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .manage-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--cream);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .manage-row.hidden-chore { opacity: 0.55; }
+  .manage-name {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .manage-name .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    background: var(--cream-dark);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: 1px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .icon-btn {
+    width: 32px; height: 32px;
+    border: 1px solid var(--border);
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: var(--ink-soft);
+    transition: all 0.15s ease;
+    padding: 0;
+  }
+  .icon-btn:hover { border-color: var(--babouche); color: var(--babouche-dark); }
+  .icon-btn.danger:hover { border-color: var(--warn); color: var(--warn); }
+
+  .primary-btn {
+    padding: 11px 18px;
+    background: var(--babouche-dark);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .primary-btn:hover { background: var(--babouche); transform: translateY(-1px); }
+  .secondary-btn {
+    padding: 11px 18px;
+    background: white;
+    color: var(--babouche-dark);
+    border: 1px solid var(--babouche);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .secondary-btn:hover { background: var(--babouche-pale); }
+  .danger-btn {
+    padding: 11px 18px;
+    background: white;
+    color: var(--warn);
+    border: 1px solid var(--warn);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .danger-btn:hover { background: var(--warn); color: white; }
+
+  .backup-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .last-backup {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 12px;
+    font-style: italic;
+  }
+
+  /* Modal */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(58, 42, 31, 0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 100;
+    animation: fadeIn 0.2s ease;
+  }
+  .modal {
+    background: var(--cream);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 24px;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 20px 50px rgba(58, 42, 31, 0.25);
+    animation: scaleIn 0.2s ease;
+  }
+  @keyframes scaleIn {
+    from { transform: scale(0.96); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .modal-title {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 18px;
+    color: var(--ink);
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .field span {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .field input[type="text"] {
+    padding: 11px 14px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s ease;
+    -webkit-user-select: auto;
+    user-select: auto;
+  }
+  .field input[type="text"]:focus { border-color: var(--babouche); }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .modal-actions button { flex: 1; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--ink);
+    color: var(--cream);
+    padding: 12px 20px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 8px 20px rgba(58, 42, 31, 0.25);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 200;
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Backup banner */
+  .backup-banner {
+    background: linear-gradient(135deg, rgba(184, 114, 28, 0.1), rgba(184, 114, 28, 0.04));
+    border: 1px solid rgba(184, 114, 28, 0.25);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .backup-banner .msg { flex: 1; }
+  .backup-banner .banner-close {
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); font-size: 18px; padding: 4px;
+  }
+  .backup-banner .banner-action {
+    color: var(--warn);
+    font-weight: 600;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: 13px;
+    padding: 0;
+    text-decoration: underline;
+  }
+
+  @media (max-width: 500px) {
+    .brand { font-size: 26px; }
+    .tab { padding: 8px 14px; font-size: 13px; }
+    .chore { padding: 14px; }
+    .done-btn { padding: 9px 12px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="brand">House<em>keeping</em></div>
+    <div class="date-stamp">
+      <span id="monthLabel">—</span>
+      <span class="day" id="dayLabel">—</span>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="today">Today</button>
+    <button class="tab" data-tab="calendar">Calendar</button>
+    <button class="tab" data-tab="settings">Settings</button>
+  </div>
+
+  <!-- TODAY VIEW -->
+  <div class="view active" id="view-today">
+    <div id="backupBannerSlot"></div>
+    <div id="recentBannerSlot"></div>
+    <div id="choresContainer"></div>
+  </div>
+
+  <!-- CALENDAR VIEW -->
+  <div class="view" id="view-calendar">
+    <div class="cal-header">
+      <div class="cal-title"><em id="calMonth">—</em> <span id="calYear">—</span></div>
+      <div class="cal-nav">
+        <button class="cal-btn" id="prevMonth">‹</button>
+        <button class="cal-btn" id="nextMonth">›</button>
+      </div>
+    </div>
+
+    <div class="chore-picker" id="chorePicker"></div>
+
+    <div class="calendar">
+      <div class="cal-weekdays">
+        <div class="wd">Mon</div><div class="wd">Tue</div><div class="wd">Wed</div>
+        <div class="wd">Thu</div><div class="wd">Fri</div><div class="wd">Sat</div><div class="wd">Sun</div>
+      </div>
+      <div class="cal-days" id="calDays"></div>
+      <div class="legend">
+        <div class="legend-item"><span class="legend-sq done"></span><span id="legendDoneLabel">Done</span></div>
+        <div class="legend-item"><span class="legend-sq empty"></span>None</div>
+      </div>
+    </div>
+
+    <div id="dayDetailSlot"></div>
+    <div class="stats-grid" id="statsGrid"></div>
+  </div>
+
+  <!-- SETTINGS VIEW -->
+  <div class="view" id="view-settings">
+    <div class="settings-section">
+      <h2 class="section-title">Your <em>chores</em></h2>
+      <p class="section-hint">Edit, hide, or remove. Tracking history is kept when you hide a chore (just removed from the list).</p>
+      <div class="chore-manager" id="choreManager"></div>
+      <button class="primary-btn" id="addChoreBtn">+ Add new chore</button>
+    </div>
+
+    <div class="settings-section">
+      <h2 class="section-title">Restore <em>defaults</em></h2>
+      <p class="section-hint">Replace your current chore list with the latest defaults from the app. Useful when the app gets updated with new starter chores. This won't touch your tracking history — only the list of chores changes.</p>
+      <button class="secondary-btn" id="restoreDefaultsBtn">↻ Restore default chore list</button>
+    </div>
+
+    <div class="settings-section">
+      <h2 class="section-title">Backup & <em>restore</em></h2>
+      <p class="section-hint">Export your data to a file. Restore it later or on another device. Recommended weekly.</p>
+      <div class="backup-row">
+        <button class="primary-btn" id="exportBtn">⬇ Export backup</button>
+        <button class="secondary-btn" id="importBtn">⬆ Import backup</button>
+        <input type="file" id="importFile" accept="application/json" style="display:none">
+      </div>
+      <div class="last-backup" id="lastBackup"></div>
+    </div>
+
+    <div class="settings-section danger-zone">
+      <h2 class="section-title">Reset</h2>
+      <p class="section-hint">Wipe all tracking data. Cannot be undone — export first.</p>
+      <button class="danger-btn" id="resetBtn">Reset all data</button>
+    </div>
+  </div>
+
+  <!-- CHORE EDIT MODAL -->
+  <div class="modal-backdrop" id="choreModal" style="display:none">
+    <div class="modal">
+      <h3 class="modal-title" id="modalTitle">Add chore</h3>
+      <label class="field">
+        <span>Icon (emoji)</span>
+        <input type="text" id="choreIcon" maxlength="4" placeholder="🧹">
+      </label>
+      <label class="field">
+        <span>Name</span>
+        <input type="text" id="choreName" maxlength="40" placeholder="e.g. Clean windows">
+      </label>
+      <label class="field" style="flex-direction: row; align-items: center; gap: 10px; padding: 10px 14px; background: white; border: 1px solid var(--border); border-radius: 10px;">
+        <input type="checkbox" id="choreCounted" style="width: 18px; height: 18px; accent-color: var(--babouche-dark);">
+        <span style="font-size: 14px; color: var(--ink); text-transform: none; letter-spacing: 0; font-weight: 500;">Track count per day (e.g. loads, runs)</span>
+      </label>
+      <label class="field" id="unitField" style="display: none;">
+        <span>Unit name (singular)</span>
+        <input type="text" id="choreUnit" maxlength="20" placeholder="load">
+      </label>
+      <div class="modal-actions">
+        <button class="secondary-btn" id="modalCancel">Cancel</button>
+        <button class="primary-btn" id="modalSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+  // ============ CONFIG ============
+  const DEFAULT_CHORES = [
+    { id: 'laundry',         name: 'Laundry',          icon: '🧺', counted: true, unit: 'load' },
+    { id: 'bathroom',        name: 'Clean bathroom',   icon: '🛁' },
+    { id: 'kitchen',         name: 'Clean kitchen',    icon: '🍽️' },
+    { id: 'sheets',          name: 'Change sheets',    icon: '🛏️' },
+    { id: 'mopping',         name: 'Mop floors',       icon: '🧽' },
+    { id: 'shower_hannah',   name: 'Shower — Hannah',  icon: '🚿' },
+    { id: 'shower_jessica',  name: 'Shower — Jessica', icon: '🚿' },
+    { id: 'costco',          name: 'Costco',           icon: '🛒' },
+  ];
+
+  const STORAGE_KEY = 'choreTrackerData_v1';
+  const CHORES_KEY = 'choreTrackerChores_v1';
+  const LAST_BACKUP_KEY = 'choreTrackerLastBackup_v1';
+  const BANNER_DISMISS_KEY = 'choreTrackerBannerDismissed_v1';
+
+  // Data shape: { 'chore_id': ['2026-04-20', '2026-04-15', ...] } — array of date strings, newest first
+  let data = loadData();
+  let CHORES = loadChores();
+  let calDate = new Date();
+  let selectedChore = 'all'; // 'all' or a chore ID
+  let selectedDay = null; // ISO date string when a calendar day is selected
+  let editingChoreId = null;
+  let recentlyDone = null; // { choreId, date } for undo
+
+  // ============ STORAGE ============
+  function loadData() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  }
+  function saveData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+  function loadChores() {
+    try {
+      const raw = localStorage.getItem(CHORES_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    localStorage.setItem(CHORES_KEY, JSON.stringify(DEFAULT_CHORES));
+    return JSON.parse(JSON.stringify(DEFAULT_CHORES));
+  }
+  function saveChores() {
+    localStorage.setItem(CHORES_KEY, JSON.stringify(CHORES));
+  }
+  function visibleChores() {
+    return CHORES.filter(c => !c.hidden);
+  }
+
+  // ============ DATE HELPERS ============
+  function todayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  function dateKey(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  function daysBetween(key1, key2) {
+    const d1 = new Date(key1), d2 = new Date(key2);
+    return Math.round((d2 - d1) / 86400000);
+  }
+  function relativeTime(key) {
+    const days = daysBetween(key, todayKey());
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days} days ago`;
+    if (days < 14) return '1 week ago';
+    if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+    if (days < 60) return '1 month ago';
+    return `${Math.floor(days / 30)} months ago`;
+  }
+
+  // ============ CHORE LOGIC ============
+  function getChoreDates(choreId) {
+    return data[choreId] || [];
+  }
+  function getCountKey(choreId) {
+    return choreId + '_counts';
+  }
+  function getCountForDate(choreId, dateStr) {
+    const counts = data[getCountKey(choreId)] || {};
+    return counts[dateStr] || 0;
+  }
+  function setCountForDate(choreId, dateStr, value) {
+    const ck = getCountKey(choreId);
+    if (!data[ck]) data[ck] = {};
+    if (value <= 0) {
+      delete data[ck][dateStr];
+      // Also remove the date from the dates array since count is now 0
+      if (data[choreId]) {
+        data[choreId] = data[choreId].filter(d => d !== dateStr);
+        if (data[choreId].length === 0) delete data[choreId];
+      }
+    } else {
+      data[ck][dateStr] = value;
+      // Make sure the date is in the dates array (newest first)
+      if (!data[choreId]) data[choreId] = [];
+      if (!data[choreId].includes(dateStr)) {
+        data[choreId].unshift(dateStr);
+        data[choreId].sort().reverse();
+      }
+    }
+    saveData();
+  }
+  function lastDoneDays(choreId) {
+    const dates = getChoreDates(choreId);
+    if (dates.length === 0) return Infinity;
+    return daysBetween(dates[0], todayKey());
+  }
+  function isDoneToday(choreId) {
+    const dates = getChoreDates(choreId);
+    return dates.length > 0 && dates[0] === todayKey();
+  }
+  function markDone(choreId) {
+    const today = todayKey();
+    const chore = CHORES.find(c => c.id === choreId);
+    if (!data[choreId]) data[choreId] = [];
+    if (data[choreId][0] === today) return; // already done
+    data[choreId].unshift(today);
+    if (chore && chore.counted) {
+      // Initialise count to 1
+      const ck = getCountKey(choreId);
+      if (!data[ck]) data[ck] = {};
+      data[ck][today] = 1;
+    }
+    saveData();
+    recentlyDone = { choreId, date: today };
+    renderToday();
+    setTimeout(() => {
+      if (recentlyDone && recentlyDone.choreId === choreId && recentlyDone.date === today) {
+        recentlyDone = null;
+        renderRecentBanner();
+      }
+    }, 6000);
+  }
+  function adjustCount(choreId, delta) {
+    const today = todayKey();
+    const current = getCountForDate(choreId, today);
+    const newVal = Math.max(0, current + delta);
+    setCountForDate(choreId, today, newVal);
+    renderToday();
+  }
+  function undoLastDone() {
+    if (!recentlyDone) return;
+    const { choreId, date } = recentlyDone;
+    if (data[choreId] && data[choreId][0] === date) {
+      data[choreId].shift();
+      if (data[choreId].length === 0) delete data[choreId];
+      // Also clear count for that date
+      const ck = getCountKey(choreId);
+      if (data[ck] && data[ck][date] !== undefined) {
+        delete data[ck][date];
+        if (Object.keys(data[ck]).length === 0) delete data[ck];
+      }
+      saveData();
+    }
+    recentlyDone = null;
+    renderToday();
+    showToast('Undone');
+  }
+
+  // Categorize chores by urgency (relative thresholds: fresh < 2 days, overdue < 14, urgent >= 14 or never)
+  function categorize(choreId) {
+    const days = lastDoneDays(choreId);
+    if (isDoneToday(choreId)) return 'fresh';
+    if (days <= 1) return 'fresh';      // done today/yesterday
+    if (days <= 7) return 'normal';
+    if (days <= 14) return 'overdue';
+    return 'urgent';                     // 14+ days or never
+  }
+
+  // ============ RENDER: HEADER ============
+  function renderHeader() {
+    const d = new Date();
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    document.getElementById('monthLabel').textContent = `${months[d.getMonth()]} ${d.getDate()}`;
+    document.getElementById('dayLabel').textContent = days[d.getDay()];
+  }
+
+  // ============ RENDER: TODAY ============
+  function renderToday() {
+    renderRecentBanner();
+    const container = document.getElementById('choresContainer');
+    container.innerHTML = '';
+
+    const vis = visibleChores();
+    if (vis.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="icon-large">🧹</div>
+          <h3>No chores yet</h3>
+          <p>Add some in the Settings tab.</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Sort: urgent → overdue → normal → fresh, then by days-since-done desc within each
+    const sorted = [...vis].sort((a, b) => {
+      const order = { urgent: 0, overdue: 1, normal: 2, fresh: 3 };
+      const ca = categorize(a.id), cb = categorize(b.id);
+      if (ca !== cb) return order[ca] - order[cb];
+      return lastDoneDays(b.id) - lastDoneDays(a.id);
+    });
+
+    // Group with section labels
+    const groups = { urgent: [], overdue: [], normal: [], fresh: [] };
+    sorted.forEach(c => groups[categorize(c.id)].push(c));
+
+    const labels = {
+      urgent: 'Needs attention',
+      overdue: 'Coming due',
+      normal: 'On track',
+      fresh: 'Recently done',
+    };
+
+    Object.keys(groups).forEach(key => {
+      if (groups[key].length === 0) return;
+      const heading = document.createElement('div');
+      heading.className = 'section-label';
+      heading.textContent = labels[key];
+      container.appendChild(heading);
+
+      const list = document.createElement('div');
+      list.className = 'chores';
+      groups[key].forEach(c => list.appendChild(renderChoreCard(c, key)));
+      container.appendChild(list);
+    });
+  }
+
+  function renderChoreCard(chore, status) {
+    const el = document.createElement('div');
+    el.className = 'chore ' + status;
+
+    const icon = document.createElement('div');
+    icon.className = 'chore-icon';
+    icon.textContent = chore.icon;
+
+    const body = document.createElement('div');
+    body.className = 'chore-body';
+
+    const name = document.createElement('div');
+    name.className = 'chore-name';
+    name.textContent = chore.name;
+
+    const meta = document.createElement('div');
+    meta.className = 'chore-meta';
+    const dates = getChoreDates(chore.id);
+    if (dates.length === 0) {
+      meta.innerHTML = '<span class="never">Never done</span>';
+    } else {
+      const rel = relativeTime(dates[0]);
+      let countSuffix = '';
+      // Show count on the most recent done date if it's a counted chore
+      if (chore.counted) {
+        const c = getCountForDate(chore.id, dates[0]);
+        if (c > 0) {
+          countSuffix = ` · ${c} ${pluralize(c, chore.unit || 'time')}`;
+        }
+      }
+      let tag = '';
+      if (status === 'urgent') tag = ' · <span class="urgent-tag">overdue</span>';
+      else if (status === 'fresh') tag = ' · <span class="fresh-tag">fresh</span>';
+      meta.innerHTML = `Last done: ${rel}${countSuffix}${tag}`;
+    }
+
+    body.appendChild(name);
+    body.appendChild(meta);
+    el.appendChild(icon);
+    el.appendChild(body);
+
+    // Action area: stepper if counted+done, otherwise mark-done button
+    if (chore.counted && isDoneToday(chore.id)) {
+      const stepper = document.createElement('div');
+      stepper.className = 'count-stepper';
+
+      const minus = document.createElement('button');
+      minus.className = 'count-step-btn';
+      minus.textContent = '−';
+      minus.title = 'Decrease';
+      minus.onclick = () => adjustCount(chore.id, -1);
+
+      const valBox = document.createElement('div');
+      valBox.className = 'count-value';
+      const count = getCountForDate(chore.id, todayKey());
+      valBox.innerHTML = `<span class="num">${count}</span><span class="unit">${escapeHtml(pluralize(count, chore.unit || 'time'))}</span>`;
+
+      const plus = document.createElement('button');
+      plus.className = 'count-step-btn';
+      plus.textContent = '+';
+      plus.title = 'Increase';
+      plus.onclick = () => adjustCount(chore.id, 1);
+
+      stepper.appendChild(minus);
+      stepper.appendChild(valBox);
+      stepper.appendChild(plus);
+      el.appendChild(stepper);
+    } else {
+      const btn = document.createElement('button');
+      btn.className = 'done-btn';
+      btn.textContent = isDoneToday(chore.id) ? '✓ Done' : 'Mark done';
+      if (isDoneToday(chore.id)) {
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+        btn.style.cursor = 'default';
+      } else {
+        btn.onclick = () => markDone(chore.id);
+      }
+      el.appendChild(btn);
+    }
+
+    return el;
+  }
+
+  function pluralize(n, word) {
+    if (n === 1) return word;
+    return word + 's';
+  }
+
+  function renderRecentBanner() {
+    const slot = document.getElementById('recentBannerSlot');
+    slot.innerHTML = '';
+    if (!recentlyDone) return;
+    const chore = CHORES.find(c => c.id === recentlyDone.choreId);
+    if (!chore) return;
+    const banner = document.createElement('div');
+    banner.className = 'recent-banner';
+    banner.innerHTML = `
+      <span>${chore.icon}</span>
+      <span>${escapeHtml(chore.name)} marked done.</span>
+      <button class="undo-btn" id="undoBtn">Undo</button>
+    `;
+    slot.appendChild(banner);
+    document.getElementById('undoBtn').onclick = undoLastDone;
+  }
+
+  // ============ RENDER: CALENDAR ============
+  function renderCalendar() {
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    document.getElementById('calMonth').textContent = months[calDate.getMonth()];
+    document.getElementById('calYear').textContent = calDate.getFullYear();
+
+    const year = calDate.getFullYear();
+    const month = calDate.getMonth();
+    const first = new Date(year, month, 1);
+    const last = new Date(year, month + 1, 0);
+    const startOffset = (first.getDay() + 6) % 7;
+    const todayStr = todayKey();
+    const todayDate = new Date();
+
+    const days = document.getElementById('calDays');
+    days.innerHTML = '';
+
+    for (let i = 0; i < startOffset; i++) {
+      const empty = document.createElement('div');
+      empty.className = 'day empty';
+      days.appendChild(empty);
+    }
+
+    for (let d = 1; d <= last.getDate(); d++) {
+      const dt = new Date(year, month, d);
+      const key = dateKey(dt);
+      const el = document.createElement('div');
+      el.className = 'day';
+      el.textContent = d;
+
+      if (dt > todayDate) {
+        el.classList.add('future');
+      } else {
+        if (selectedChore === 'all') {
+          // Count any chore done that day
+          const count = countChoresOnDay(key);
+          if (count > 0) {
+            el.classList.add('done');
+            if (count > 1) {
+              const dot = document.createElement('span');
+              dot.className = 'count-dot';
+              dot.textContent = count;
+              el.appendChild(dot);
+            }
+          }
+        } else {
+          const dates = getChoreDates(selectedChore);
+          if (dates.includes(key)) el.classList.add('done');
+        }
+        el.onclick = () => selectDay(key);
+      }
+      if (key === todayStr) el.classList.add('today');
+      if (key === selectedDay) el.style.boxShadow = '0 0 0 2px var(--babouche)';
+
+      days.appendChild(el);
+    }
+
+    // Update legend label depending on filter
+    document.getElementById('legendDoneLabel').textContent = selectedChore === 'all' ? 'Any chore done' : 'Done';
+  }
+
+  function countChoresOnDay(key) {
+    let count = 0;
+    visibleChores().forEach(c => {
+      if (getChoreDates(c.id).includes(key)) count++;
+    });
+    return count;
+  }
+
+  function selectDay(key) {
+    selectedDay = (selectedDay === key) ? null : key;
+    renderCalendar();
+    renderDayDetail();
+  }
+
+  function renderDayDetail() {
+    const slot = document.getElementById('dayDetailSlot');
+    slot.innerHTML = '';
+    if (!selectedDay) return;
+    const detail = document.createElement('div');
+    detail.className = 'day-detail';
+    const dt = new Date(selectedDay);
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const dayLabel = `${dt.getDate()} ${months[dt.getMonth()]}`;
+
+    const choresOnDay = visibleChores().filter(c => getChoreDates(c.id).includes(selectedDay));
+
+    detail.innerHTML = `<div class="day-detail-title"><em>${dayLabel}</em></div>`;
+    const list = document.createElement('div');
+    list.className = 'day-detail-list';
+    if (choresOnDay.length === 0) {
+      list.innerHTML = '<div class="day-detail-empty">No chores logged this day.</div>';
+    } else {
+      choresOnDay.forEach(c => {
+        const row = document.createElement('div');
+        row.className = 'day-detail-row';
+        let countSuffix = '';
+        if (c.counted) {
+          const cnt = getCountForDate(c.id, selectedDay);
+          if (cnt > 0) countSuffix = ` <span style="color: var(--muted); margin-left: 6px;">· ${cnt} ${escapeHtml(pluralize(cnt, c.unit || 'time'))}</span>`;
+        }
+        row.innerHTML = `<span class="icon-mini">${c.icon}</span><span>${escapeHtml(c.name)}${countSuffix}</span>`;
+        list.appendChild(row);
+      });
+    }
+    detail.appendChild(list);
+    slot.appendChild(detail);
+  }
+
+  function renderChorePicker() {
+    const picker = document.getElementById('chorePicker');
+    picker.innerHTML = '';
+
+    // "All" chip
+    const allChip = document.createElement('button');
+    allChip.className = 'chore-chip all-mode' + (selectedChore === 'all' ? ' active' : '');
+    allChip.textContent = '◆ All chores';
+    allChip.onclick = () => {
+      selectedChore = 'all';
+      renderChorePicker();
+      renderCalendar();
+      renderDayDetail();
+      renderStats();
+    };
+    picker.appendChild(allChip);
+
+    visibleChores().forEach(c => {
+      const chip = document.createElement('button');
+      chip.className = 'chore-chip' + (c.id === selectedChore ? ' active' : '');
+      chip.textContent = c.icon + ' ' + c.name;
+      chip.onclick = () => {
+        selectedChore = c.id;
+        renderChorePicker();
+        renderCalendar();
+        renderDayDetail();
+        renderStats();
+      };
+      picker.appendChild(chip);
+    });
+  }
+
+  function renderStats() {
+    const grid = document.getElementById('statsGrid');
+    grid.innerHTML = '';
+    visibleChores().forEach(c => {
+      const dates = getChoreDates(c.id);
+      const monthCount = countChoreInMonth(c.id);
+      const lastRel = dates.length > 0 ? relativeTime(dates[0]) : 'Never';
+      const card = document.createElement('div');
+      card.className = 'stat-card';
+      let extraRows = '';
+      if (c.counted) {
+        const monthTotal = sumCountInMonth(c.id);
+        const allTotal = sumCountAllTime(c.id);
+        const unit = c.unit || 'time';
+        extraRows = `
+          <div class="stat-row"><span>${escapeHtml(pluralize(2, unit))} this month</span><span class="v">${monthTotal}</span></div>
+          <div class="stat-row"><span>${escapeHtml(pluralize(2, unit))} all time</span><span class="v">${allTotal}</span></div>
+        `;
+      }
+      card.innerHTML = `
+        <div class="stat-name">${c.icon} ${escapeHtml(c.name)}</div>
+        <div class="stat-row"><span>Last done</span><span class="v">${lastRel}</span></div>
+        <div class="stat-row"><span>Days this month</span><span class="v">${monthCount}</span></div>
+        <div class="stat-row"><span>Days all time</span><span class="v">${dates.length}</span></div>
+        ${extraRows}
+      `;
+      grid.appendChild(card);
+    });
+  }
+  function sumCountInMonth(choreId) {
+    const counts = data[getCountKey(choreId)] || {};
+    const year = calDate.getFullYear();
+    const month = calDate.getMonth();
+    let total = 0;
+    Object.keys(counts).forEach(d => {
+      const dt = new Date(d);
+      if (dt.getFullYear() === year && dt.getMonth() === month) {
+        total += counts[d];
+      }
+    });
+    return total;
+  }
+  function sumCountAllTime(choreId) {
+    const counts = data[getCountKey(choreId)] || {};
+    return Object.values(counts).reduce((a, b) => a + b, 0);
+  }
+  function countChoreInMonth(choreId) {
+    const year = calDate.getFullYear();
+    const month = calDate.getMonth();
+    return getChoreDates(choreId).filter(d => {
+      const dt = new Date(d);
+      return dt.getFullYear() === year && dt.getMonth() === month;
+    }).length;
+  }
+
+  // ============ SETTINGS: CHORE MANAGER ============
+  function renderChoreManager() {
+    const box = document.getElementById('choreManager');
+    box.innerHTML = '';
+    CHORES.forEach((c, idx) => {
+      const row = document.createElement('div');
+      row.className = 'manage-row' + (c.hidden ? ' hidden-chore' : '');
+
+      const name = document.createElement('div');
+      name.className = 'manage-name';
+      let badges = '';
+      if (c.counted) badges += `<span class="badge">${escapeHtml(c.unit || 'count')}</span>`;
+      if (c.hidden) badges += '<span class="badge">hidden</span>';
+      name.innerHTML = `${c.icon} ${escapeHtml(c.name)}${badges}`;
+
+      const upBtn = makeIconBtn('↑', 'Move up', () => moveChore(idx, -1));
+      const downBtn = makeIconBtn('↓', 'Move down', () => moveChore(idx, 1));
+      const editBtn = makeIconBtn('✎', 'Edit', () => openChoreModal(c.id));
+      const hideBtn = makeIconBtn(c.hidden ? '◎' : '●', c.hidden ? 'Show' : 'Hide', () => toggleHide(c.id));
+      const delBtn = makeIconBtn('🗑', 'Delete', () => deleteChore(c.id));
+      delBtn.classList.add('danger');
+
+      row.appendChild(name);
+      row.appendChild(upBtn);
+      row.appendChild(downBtn);
+      row.appendChild(editBtn);
+      row.appendChild(hideBtn);
+      row.appendChild(delBtn);
+      box.appendChild(row);
+    });
+  }
+  function makeIconBtn(label, title, onClick) {
+    const b = document.createElement('button');
+    b.className = 'icon-btn';
+    b.textContent = label;
+    b.title = title;
+    b.onclick = onClick;
+    return b;
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function moveChore(idx, dir) {
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= CHORES.length) return;
+    [CHORES[idx], CHORES[newIdx]] = [CHORES[newIdx], CHORES[idx]];
+    saveChores();
+    renderChoreManager();
+    renderToday();
+    renderChorePicker();
+  }
+  function toggleHide(choreId) {
+    const c = CHORES.find(x => x.id === choreId);
+    if (!c) return;
+    c.hidden = !c.hidden;
+    saveChores();
+    renderChoreManager();
+    renderToday();
+    renderChorePicker();
+    renderStats();
+    showToast(c.hidden ? 'Chore hidden (data kept)' : 'Chore shown again');
+  }
+  function deleteChore(choreId) {
+    const c = CHORES.find(x => x.id === choreId);
+    if (!c) return;
+    const hasHistory = (data[choreId] || []).length > 0;
+    let msg = `Delete "${c.name}"?`;
+    if (hasHistory) {
+      msg += '\n\nThis chore has tracking history. Deleting will remove it from the list AND erase its history permanently.\n\nTip: Use "hide" instead to keep history.';
+    }
+    if (!confirm(msg)) return;
+    CHORES = CHORES.filter(x => x.id !== choreId);
+    delete data[choreId];
+    delete data[getCountKey(choreId)];
+    saveChores();
+    saveData();
+    if (selectedChore === choreId) selectedChore = 'all';
+    renderChoreManager();
+    renderToday();
+    renderChorePicker();
+    renderCalendar();
+    renderStats();
+    showToast('Chore deleted');
+  }
+
+  // ============ SETTINGS: MODAL ============
+  function openChoreModal(choreId) {
+    editingChoreId = choreId || null;
+    const modal = document.getElementById('choreModal');
+    const title = document.getElementById('modalTitle');
+    const iconInput = document.getElementById('choreIcon');
+    const nameInput = document.getElementById('choreName');
+    const countedInput = document.getElementById('choreCounted');
+    const unitInput = document.getElementById('choreUnit');
+    const unitField = document.getElementById('unitField');
+
+    if (choreId) {
+      const c = CHORES.find(x => x.id === choreId);
+      title.textContent = 'Edit chore';
+      iconInput.value = c.icon || '';
+      nameInput.value = c.name || '';
+      countedInput.checked = !!c.counted;
+      unitInput.value = c.unit || '';
+    } else {
+      title.textContent = 'Add chore';
+      iconInput.value = '';
+      nameInput.value = '';
+      countedInput.checked = false;
+      unitInput.value = '';
+    }
+    unitField.style.display = countedInput.checked ? 'flex' : 'none';
+    countedInput.onchange = () => {
+      unitField.style.display = countedInput.checked ? 'flex' : 'none';
+    };
+    modal.style.display = 'flex';
+    setTimeout(() => nameInput.focus(), 50);
+  }
+  function closeChoreModal() {
+    document.getElementById('choreModal').style.display = 'none';
+    editingChoreId = null;
+  }
+  function saveChoreFromModal() {
+    const icon = document.getElementById('choreIcon').value.trim() || '•';
+    const name = document.getElementById('choreName').value.trim();
+    const counted = document.getElementById('choreCounted').checked;
+    const unit = document.getElementById('choreUnit').value.trim() || 'time';
+    if (!name) {
+      showToast('Please enter a name');
+      return;
+    }
+    if (editingChoreId) {
+      const c = CHORES.find(x => x.id === editingChoreId);
+      c.icon = icon;
+      c.name = name;
+      c.counted = counted;
+      if (counted) c.unit = unit;
+      else delete c.unit;
+      showToast('Chore updated');
+    } else {
+      const newChore = {
+        id: 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        name, icon,
+      };
+      if (counted) {
+        newChore.counted = true;
+        newChore.unit = unit;
+      }
+      CHORES.push(newChore);
+      showToast('Chore added');
+    }
+    saveChores();
+    closeChoreModal();
+    renderChoreManager();
+    renderToday();
+    renderChorePicker();
+    renderStats();
+  }
+
+  // ============ EXPORT / IMPORT ============
+  function exportBackup() {
+    const payload = {
+      version: 1,
+      type: 'chores',
+      exportedAt: new Date().toISOString(),
+      chores: CHORES,
+      data: data,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const date = new Date().toISOString().slice(0, 10);
+    a.download = `chores-backup-${date}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    localStorage.setItem(LAST_BACKUP_KEY, new Date().toISOString());
+    renderLastBackup();
+    renderBackupBanner();
+    showToast('Backup downloaded');
+  }
+  function importBackup(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const payload = JSON.parse(e.target.result);
+        if (!payload.chores || !payload.data) throw new Error('Invalid file');
+        if (!confirm('Restore from backup? This will replace your current chores and history.')) return;
+        CHORES = payload.chores;
+        data = payload.data;
+        saveChores();
+        saveData();
+        selectedChore = 'all';
+        selectedDay = null;
+        renderChoreManager();
+        renderToday();
+        renderChorePicker();
+        renderCalendar();
+        renderStats();
+        showToast('Backup restored');
+      } catch (err) {
+        alert('Could not import file. Make sure it is a valid chores backup.\n\n' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  }
+  function renderLastBackup() {
+    const el = document.getElementById('lastBackup');
+    const last = localStorage.getItem(LAST_BACKUP_KEY);
+    if (last) {
+      const d = new Date(last);
+      el.textContent = `Last backup: ${d.toLocaleDateString()} at ${d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}`;
+    } else {
+      el.textContent = 'No backup created yet.';
+    }
+  }
+  function resetAll() {
+    if (!confirm('Wipe ALL chores and tracking data? This cannot be undone. Consider exporting a backup first.')) return;
+    if (!confirm('Really sure? All your history will be gone.')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(CHORES_KEY);
+    localStorage.removeItem(LAST_BACKUP_KEY);
+    localStorage.removeItem(BANNER_DISMISS_KEY);
+    location.reload();
+  }
+
+  function restoreDefaults() {
+    // Find chores in current list that aren't in defaults — warn if any have history
+    const defaultIds = DEFAULT_CHORES.map(c => c.id);
+    const customWithHistory = CHORES.filter(c =>
+      !defaultIds.includes(c.id) && (data[c.id] || []).length > 0
+    );
+    let msg = 'Replace your current chore list with the app defaults?\n\nYour tracking history will NOT be touched.';
+    if (customWithHistory.length > 0) {
+      msg += `\n\nNote: ${customWithHistory.length} of your custom chore(s) with history will be removed from the list (their tracking data stays in case you re-add them later):\n• ${customWithHistory.map(c => c.name).join('\n• ')}`;
+    }
+    if (!confirm(msg)) return;
+    CHORES = JSON.parse(JSON.stringify(DEFAULT_CHORES));
+    saveChores();
+    selectedChore = 'all';
+    renderChoreManager();
+    renderToday();
+    renderChorePicker();
+    renderCalendar();
+    renderStats();
+    showToast('Default chore list restored');
+  }
+
+  // ============ BACKUP REMINDER BANNER ============
+  function renderBackupBanner() {
+    const slot = document.getElementById('backupBannerSlot');
+    slot.innerHTML = '';
+    const last = localStorage.getItem(LAST_BACKUP_KEY);
+    const dismissed = localStorage.getItem(BANNER_DISMISS_KEY);
+    const totalLogs = Object.values(data).reduce((sum, arr) => sum + arr.length, 0);
+    if (totalLogs < 5) return;
+
+    const now = Date.now();
+    const dismissedRecently = dismissed && (now - parseInt(dismissed)) < 7 * 24 * 60 * 60 * 1000;
+    if (dismissedRecently) return;
+    const lastMs = last ? new Date(last).getTime() : 0;
+    const daysSinceBackup = (now - lastMs) / (24 * 60 * 60 * 1000);
+    if (last && daysSinceBackup < 7) return;
+
+    const banner = document.createElement('div');
+    banner.className = 'backup-banner';
+    const msg = last
+      ? `It's been over a week since your last backup. <button class="banner-action" id="bannerBackupBtn">Back up now</button>`
+      : `You've logged ${totalLogs} chores. <button class="banner-action" id="bannerBackupBtn">Back up your data</button> to protect it.`;
+    banner.innerHTML = `
+      <span>💾</span>
+      <span class="msg">${msg}</span>
+      <button class="banner-close" id="bannerCloseBtn" title="Dismiss">×</button>
+    `;
+    slot.appendChild(banner);
+    document.getElementById('bannerBackupBtn').onclick = () => exportBackup();
+    document.getElementById('bannerCloseBtn').onclick = () => {
+      localStorage.setItem(BANNER_DISMISS_KEY, Date.now().toString());
+      renderBackupBanner();
+    };
+  }
+
+  // ============ TOAST ============
+  let toastTimer = null;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  // ============ EVENTS ============
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.onclick = () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('view-' + tab.dataset.tab).classList.add('active');
+      if (tab.dataset.tab === 'calendar') {
+        renderChorePicker();
+        renderCalendar();
+        renderDayDetail();
+        renderStats();
+      }
+      if (tab.dataset.tab === 'settings') {
+        renderChoreManager();
+        renderLastBackup();
+      }
+    };
+  });
+
+  document.getElementById('prevMonth').onclick = () => {
+    calDate.setMonth(calDate.getMonth() - 1);
+    renderCalendar();
+    renderStats();
+  };
+  document.getElementById('nextMonth').onclick = () => {
+    calDate.setMonth(calDate.getMonth() + 1);
+    renderCalendar();
+    renderStats();
+  };
+
+  document.getElementById('addChoreBtn').onclick = () => openChoreModal(null);
+  document.getElementById('exportBtn').onclick = exportBackup;
+  document.getElementById('importBtn').onclick = () => document.getElementById('importFile').click();
+  document.getElementById('importFile').onchange = (e) => {
+    if (e.target.files[0]) importBackup(e.target.files[0]);
+    e.target.value = '';
+  };
+  document.getElementById('resetBtn').onclick = resetAll;
+  document.getElementById('restoreDefaultsBtn').onclick = restoreDefaults;
+
+  document.getElementById('modalSave').onclick = saveChoreFromModal;
+  document.getElementById('modalCancel').onclick = closeChoreModal;
+  document.getElementById('choreModal').onclick = (e) => {
+    if (e.target.id === 'choreModal') closeChoreModal();
+  };
+
+  // ============ INIT ============
+  renderHeader();
+  renderToday();
+  renderChorePicker();
+  renderCalendar();
+  renderStats();
+  renderBackupBanner();
+
+  // Refresh at midnight
+  function scheduleMidnightRefresh() {
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setHours(24, 0, 5, 0);
+    setTimeout(() => {
+      renderHeader();
+      renderToday();
+      scheduleMidnightRefresh();
+    }, midnight - now);
+  }
+  scheduleMidnightRefresh();
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
