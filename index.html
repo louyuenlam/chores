@@ -663,8 +663,23 @@
     -webkit-user-select: auto;
     user-select: auto;
     width: 100%;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    appearance: none;
+    min-height: 44px;
+    display: block;
   }
   .date-input:focus { border-color: var(--babouche); }
+  /* Hide the iOS calendar icon that can cause overflow */
+  .date-input::-webkit-date-and-time-value {
+    text-align: left;
+    min-height: 1.4em;
+  }
+  .date-input::-webkit-calendar-picker-indicator {
+    margin-left: 8px;
+    cursor: pointer;
+    opacity: 0.5;
+  }
 
   /* Stats */
   .stats-grid {
