@@ -528,6 +528,144 @@
     font-style: italic;
   }
 
+  /* Today actions row */
+  .today-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 14px;
+  }
+  .link-btn {
+    background: none;
+    border: none;
+    color: var(--babouche-dark);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: background 0.15s ease;
+  }
+  .link-btn:hover { background: var(--babouche-pale); }
+
+  /* Day editor */
+  .day-detail-row {
+    position: relative;
+  }
+  .day-row-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .row-remove-btn {
+    width: 26px; height: 26px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s ease;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  .row-remove-btn:hover { background: rgba(184, 114, 28, 0.15); color: var(--warn); }
+
+  .row-count-stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+  }
+  .row-count-btn {
+    width: 22px; height: 22px;
+    border: 1px solid var(--border);
+    background: white;
+    color: var(--babouche-dark);
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0; line-height: 1;
+  }
+  .row-count-btn:hover { border-color: var(--babouche); }
+  .row-count-num {
+    font-family: 'Fraunces', serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--babouche-dark);
+    min-width: 20px;
+    text-align: center;
+  }
+
+  .day-editor-add {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+  }
+  .add-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+  .add-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .add-chip {
+    padding: 6px 12px;
+    border: 1px dashed var(--babouche);
+    background: white;
+    color: var(--babouche-dark);
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .add-chip:hover {
+    background: var(--babouche-pale);
+    border-style: solid;
+  }
+  .add-chip.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .day-editor-empty-add {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    font-style: italic;
+    padding: 8px;
+  }
+
+  /* Date picker modal */
+  .date-input {
+    padding: 11px 14px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--ink);
+    outline: none;
+    -webkit-user-select: auto;
+    user-select: auto;
+    width: 100%;
+  }
+  .date-input:focus { border-color: var(--babouche); }
+
   /* Stats */
   .stats-grid {
     display: grid;
@@ -849,6 +987,9 @@
   <div class="view active" id="view-today">
     <div id="backupBannerSlot"></div>
     <div id="recentBannerSlot"></div>
+    <div class="today-actions">
+      <button class="link-btn" id="logPastBtn">📅 Log for past date</button>
+    </div>
     <div id="choresContainer"></div>
   </div>
 
@@ -910,6 +1051,22 @@
       <h2 class="section-title">Reset</h2>
       <p class="section-hint">Wipe all tracking data. Cannot be undone — export first.</p>
       <button class="danger-btn" id="resetBtn">Reset all data</button>
+    </div>
+  </div>
+
+  <!-- DATE PICKER MODAL -->
+  <div class="modal-backdrop" id="dateModal" style="display:none">
+    <div class="modal">
+      <h3 class="modal-title">Pick a date</h3>
+      <p class="section-hint">Choose a past day to log or edit chores for. Future dates aren't allowed.</p>
+      <label class="field">
+        <span>Date</span>
+        <input type="date" class="date-input" id="dateInput">
+      </label>
+      <div class="modal-actions">
+        <button class="secondary-btn" id="dateModalCancel">Cancel</button>
+        <button class="primary-btn" id="dateModalOpen">Open day</button>
+      </div>
     </div>
   </div>
 
@@ -1087,6 +1244,58 @@
     const newVal = Math.max(0, current + delta);
     setCountForDate(choreId, today, newVal);
     renderToday();
+  }
+
+  // ============ BACKDATE HELPERS ============
+  function addChoreToDate(choreId, dateStr) {
+    const chore = CHORES.find(c => c.id === choreId);
+    if (!chore) return;
+    if (!data[choreId]) data[choreId] = [];
+    if (!data[choreId].includes(dateStr)) {
+      data[choreId].unshift(dateStr);
+      data[choreId].sort().reverse();
+    }
+    if (chore.counted) {
+      const ck = getCountKey(choreId);
+      if (!data[ck]) data[ck] = {};
+      if (!data[ck][dateStr]) data[ck][dateStr] = 1;
+    }
+    saveData();
+  }
+  function removeChoreFromDate(choreId, dateStr) {
+    if (data[choreId]) {
+      data[choreId] = data[choreId].filter(d => d !== dateStr);
+      if (data[choreId].length === 0) delete data[choreId];
+    }
+    const ck = getCountKey(choreId);
+    if (data[ck] && data[ck][dateStr] !== undefined) {
+      delete data[ck][dateStr];
+      if (Object.keys(data[ck]).length === 0) delete data[ck];
+    }
+    saveData();
+  }
+  function adjustCountForDate(choreId, dateStr, delta) {
+    const current = getCountForDate(choreId, dateStr);
+    const newVal = Math.max(0, current + delta);
+    if (newVal === 0) {
+      removeChoreFromDate(choreId, dateStr);
+    } else {
+      setCountForDate(choreId, dateStr, newVal);
+    }
+  }
+  function formatDayLabel(dateStr) {
+    const dt = new Date(dateStr);
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const today = todayKey();
+    const yesterday = (() => {
+      const d = new Date();
+      d.setDate(d.getDate() - 1);
+      return dateKey(d);
+    })();
+    if (dateStr === today) return 'Today';
+    if (dateStr === yesterday) return 'Yesterday';
+    return `${days[dt.getDay()]}, ${dt.getDate()} ${months[dt.getMonth()]}`;
   }
   function undoLastDone() {
     if (!recentlyDone) return;
@@ -1362,33 +1571,128 @@
     const slot = document.getElementById('dayDetailSlot');
     slot.innerHTML = '';
     if (!selectedDay) return;
+
     const detail = document.createElement('div');
     detail.className = 'day-detail';
-    const dt = new Date(selectedDay);
-    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    const dayLabel = `${dt.getDate()} ${months[dt.getMonth()]}`;
 
     const choresOnDay = visibleChores().filter(c => getChoreDates(c.id).includes(selectedDay));
+    const choresNotOnDay = visibleChores().filter(c => !getChoreDates(c.id).includes(selectedDay));
 
-    detail.innerHTML = `<div class="day-detail-title"><em>${dayLabel}</em></div>`;
+    detail.innerHTML = `<div class="day-detail-title"><em>${escapeHtml(formatDayLabel(selectedDay))}</em></div>`;
+
     const list = document.createElement('div');
     list.className = 'day-detail-list';
+
     if (choresOnDay.length === 0) {
-      list.innerHTML = '<div class="day-detail-empty">No chores logged this day.</div>';
+      const empty = document.createElement('div');
+      empty.className = 'day-detail-empty';
+      empty.textContent = 'No chores logged this day yet.';
+      list.appendChild(empty);
     } else {
       choresOnDay.forEach(c => {
         const row = document.createElement('div');
         row.className = 'day-detail-row';
-        let countSuffix = '';
+
+        const content = document.createElement('div');
+        content.className = 'day-row-content';
+        content.innerHTML = `<span class="icon-mini">${c.icon}</span><span>${escapeHtml(c.name)}</span>`;
+        row.appendChild(content);
+
+        // Counter for counted chores
         if (c.counted) {
           const cnt = getCountForDate(c.id, selectedDay);
-          if (cnt > 0) countSuffix = ` <span style="color: var(--muted); margin-left: 6px;">· ${cnt} ${escapeHtml(pluralize(cnt, c.unit || 'time'))}</span>`;
+          const stepper = document.createElement('div');
+          stepper.className = 'row-count-stepper';
+
+          const minus = document.createElement('button');
+          minus.className = 'row-count-btn';
+          minus.textContent = '−';
+          minus.title = 'Decrease';
+          minus.onclick = () => {
+            adjustCountForDate(c.id, selectedDay, -1);
+            renderCalendar();
+            renderDayDetail();
+            renderStats();
+            renderToday();
+          };
+
+          const num = document.createElement('span');
+          num.className = 'row-count-num';
+          num.textContent = `${cnt} ${pluralize(cnt, c.unit || 'time')}`;
+
+          const plus = document.createElement('button');
+          plus.className = 'row-count-btn';
+          plus.textContent = '+';
+          plus.title = 'Increase';
+          plus.onclick = () => {
+            adjustCountForDate(c.id, selectedDay, 1);
+            renderCalendar();
+            renderDayDetail();
+            renderStats();
+            renderToday();
+          };
+
+          stepper.appendChild(minus);
+          stepper.appendChild(num);
+          stepper.appendChild(plus);
+          row.appendChild(stepper);
         }
-        row.innerHTML = `<span class="icon-mini">${c.icon}</span><span>${escapeHtml(c.name)}${countSuffix}</span>`;
+
+        // Remove button (always available for past entries)
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'row-remove-btn';
+        removeBtn.innerHTML = '✕';
+        removeBtn.title = 'Remove from this day';
+        removeBtn.onclick = () => {
+          if (!confirm(`Remove "${c.name}" from ${formatDayLabel(selectedDay)}?`)) return;
+          removeChoreFromDate(c.id, selectedDay);
+          renderCalendar();
+          renderDayDetail();
+          renderStats();
+          renderToday();
+          showToast('Removed');
+        };
+        row.appendChild(removeBtn);
+
         list.appendChild(row);
       });
     }
     detail.appendChild(list);
+
+    // Add chores section
+    const adder = document.createElement('div');
+    adder.className = 'day-editor-add';
+    const label = document.createElement('div');
+    label.className = 'add-label';
+    label.textContent = 'Add chore to this day';
+    adder.appendChild(label);
+
+    if (choresNotOnDay.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'day-editor-empty-add';
+      empty.textContent = 'All chores already logged for this day.';
+      adder.appendChild(empty);
+    } else {
+      const chips = document.createElement('div');
+      chips.className = 'add-chips';
+      choresNotOnDay.forEach(c => {
+        const chip = document.createElement('button');
+        chip.className = 'add-chip';
+        chip.innerHTML = `<span>${c.icon}</span><span>${escapeHtml(c.name)}</span><span style="margin-left:2px;">+</span>`;
+        chip.onclick = () => {
+          addChoreToDate(c.id, selectedDay);
+          renderCalendar();
+          renderDayDetail();
+          renderStats();
+          renderToday();
+          showToast('Added');
+        };
+        chips.appendChild(chip);
+      });
+      adder.appendChild(chips);
+    }
+    detail.appendChild(adder);
+
     slot.appendChild(detail);
   }
 
@@ -1817,6 +2121,56 @@
   document.getElementById('modalCancel').onclick = closeChoreModal;
   document.getElementById('choreModal').onclick = (e) => {
     if (e.target.id === 'choreModal') closeChoreModal();
+  };
+
+  // Date picker for "Log for past date"
+  function openDatePicker() {
+    const modal = document.getElementById('dateModal');
+    const input = document.getElementById('dateInput');
+    input.max = todayKey();
+    input.value = todayKey();
+    modal.style.display = 'flex';
+    setTimeout(() => input.focus(), 50);
+  }
+  function closeDatePicker() {
+    document.getElementById('dateModal').style.display = 'none';
+  }
+  function confirmDatePicker() {
+    const input = document.getElementById('dateInput');
+    const val = input.value;
+    if (!val) {
+      showToast('Please pick a date');
+      return;
+    }
+    if (val > todayKey()) {
+      showToast('Cannot pick a future date');
+      return;
+    }
+    closeDatePicker();
+    // Jump to calendar tab on that month with that day selected
+    const dt = new Date(val);
+    calDate = new Date(dt.getFullYear(), dt.getMonth(), 1);
+    selectedDay = val;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelector('.tab[data-tab="calendar"]').classList.add('active');
+    document.getElementById('view-calendar').classList.add('active');
+    renderChorePicker();
+    renderCalendar();
+    renderDayDetail();
+    renderStats();
+    // Scroll to day detail
+    setTimeout(() => {
+      const slot = document.getElementById('dayDetailSlot');
+      if (slot) slot.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
+
+  document.getElementById('logPastBtn').onclick = openDatePicker;
+  document.getElementById('dateModalOpen').onclick = confirmDatePicker;
+  document.getElementById('dateModalCancel').onclick = closeDatePicker;
+  document.getElementById('dateModal').onclick = (e) => {
+    if (e.target.id === 'dateModal') closeDatePicker();
   };
 
   // ============ INIT ============
